@@ -1,13 +1,16 @@
+mod vec3;
+
 use log::error;
 use pixels::{Pixels, SurfaceTexture};
+use vec3::{Vec3, Color};
 use winit::dpi::LogicalSize;
 use winit::event::{Event, VirtualKeyCode};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 
-const WIDTH: u32 = 960;
-const HEIGHT: u32 = 960;
+const WIDTH: u32 = 640;
+const HEIGHT: u32 = 640;
 
 fn main() {
     env_logger::init();
@@ -33,7 +36,7 @@ fn main() {
     event_loop.run(move |event, _, control_flow| {
         if let Event::RedrawRequested(_) = event {
             // render the current frame
-            draw(pixels.get_frame());
+            draw_pixel(pixels.get_frame());
             if pixels
                 .render()
                 .map_err(|e| error!("pixels.render() failed: {}", e))
@@ -57,16 +60,28 @@ fn main() {
                 pixels.resize(size.width, size.height);
             }
 
-            // request a redraw?
+            // request a redraw
             window.request_redraw();
         }
     });
 }
 
 // Place this in some ray tracer struct/impl
-fn draw(frame: &mut [u8]) {
-    for(_, pixel) in frame.chunks_exact_mut(4).enumerate() {
-        let color = [0x5e, 0x48, 0xe8, 0xff];
-        pixel.copy_from_slice(&color);
+fn draw_pixel(frame: &mut [u8])
+{
+    for(i, pixel) in frame.chunks_exact_mut(4).enumerate() {
+        let x = (i % WIDTH as usize) as i16; //i
+        let y = (i / HEIGHT as usize) as i16; //j
+
+        let pixel_color: Color = Color::new(
+            x as f32 / (WIDTH - 1) as f32, 
+            y as f32 / (HEIGHT - 1) as f32,
+            0.25f32);
+
+        pixel.copy_from_slice(&color_to_rgb_slice(&pixel_color));
     }
+}
+
+fn color_to_rgb_slice(color: &Color) -> [u8; 4] {
+    [(255.99f32 * color.get_x_coord()) as u8, (255.99f32 * color.get_y_coord()) as u8, (255.99f32 * color.get_z_coord()) as u8, 0xff]
 }
